@@ -1,0 +1,23 @@
+# Despliegue en Netlify. El adaptador oficial de Next (@netlify/plugin-nextjs) sirve las rutas
+# app/api/* como funciones, así que el BFF funciona igual que en Node. NO se usa la salida
+# "standalone" (esa es solo para la imagen Docker); aquí BUILD_STANDALONE queda sin definir.
+#
+# IMPORTANTE: configura las variables de entorno del servicio en el panel de Netlify
+# (Site settings → Environment variables): BLERIFY_API_URL, ORG_ID, PROJECT_ID, RULE_ID,
+# WALLET_BASE_URL, SA_CLIENT_ID, SA_PRIVATE_KEY, SA_IAM_AUDIENCE. Ver .env.example.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # El escáner de secretos de Netlify trata toda env var como secreta y busca su valor en el build.
+  # PORT (=8080) NO es secreto y su valor aparece en dependencias, Dockerfile, README, etc., lo que
+  # hace fallar el build con falsos positivos. Lo excluimos del escaneo (el resto se sigue escaneando,
+  # así un secreto real como SA_PRIVATE_KEY sí se detectaría). En Netlify PORT ni siquiera se usa
+  # (lo gestiona el runtime de funciones); puedes además quitarlo de las env vars del sitio.
+  SECRETS_SCAN_OMIT_KEYS = "PORT"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
